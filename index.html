@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Nexus - Sua Loja de Games</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyan-glow: 0 0 15px rgba(56, 189, 248, 0.4), 0 0 5px rgba(56, 189, 248, 0.5);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231f2937' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .product-card {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid #30363d;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.15), 0 0 10px rgba(74, 222, 128, 0.1);
+        }
+        .modal-container {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-box {
+            transition: transform 0.3s ease;
+        }
+        .modal-container.hidden .modal-box {
+            transform: scale(0.95);
+        }
+        .form-input {
+             background-color: #374151; /* bg-gray-600 */
+             border: 1px solid #4b5563; /* border-gray-500 */
+        }
+        .form-input:focus {
+            --tw-ring-color: #06b6d4; /* ring-cyan-500 */
+            box-shadow: var(--cyan-glow);
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-900/50 backdrop-blur-md sticky top-0 z-40 border-b border-gray-700">
+        <div class="container mx-auto px-4 md:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="#" class="text-2xl font-bold text-cyan-400">Digital Nexus</a>
+                <div class="hidden md:flex items-center space-x-4" id="nav-actions"></div>
+                <div class="md:hidden"><button id="mobile-menu-button" class="text-white focus:outline-none"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button></div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden px-4 pt-2 pb-4 space-y-2"></div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">O Maior Catálogo Digital</h1>
+            <p class="text-gray-400 mt-2 text-lg">Jogos, softwares e muito mais.</p>
+        </header>
+        
+        <div class="mb-10 p-4 bg-gray-800/50 rounded-xl border border-gray-700">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="relative flex-grow w-full">
+                    <input type="text" id="search-input" placeholder="Pesquisar por nome..." class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white">
+                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <div id="category-filters" class="flex-shrink-0 flex flex-wrap gap-2 justify-center"></div>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-8">
+                 <h2 class="text-3xl font-bold text-white">Nosso Catálogo</h2>
+                 <button id="open-add-product-modal-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Adicionar Produto Local</button>
+            </div>
+            <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+            <div id="loading-indicator" class="text-center text-gray-400 mt-10"></div>
+        </div>
+    </main>
+    
+    <!-- Estrutura de Modal Genérica -->
+    <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 backdrop-blur-sm modal-container">
+        <div id="modal-box" class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md modal-box border border-gray-700 relative">
+             <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+             <div id="modal-content" class="p-8"></div>
+        </div>
+    </div>
+    
+    <div id="toast-notification" class="fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-xl opacity-0 transition-all duration-300 transform translate-y-10"></div>
+    
+    <footer class="text-center p-10 mt-12 border-t border-gray-800"><p class="text-gray-500">Digital Nexus &copy; 2025 - Todos os direitos reservados.</p></footer>
+
+<script>
+// ===================================================================================
+// "BASE DE DADOS" EM MEMÓRIA
+// Todos os dados são guardados aqui. Funciona em qualquer navegador, sem restrições.
+// Nota: As alterações serão perdidas ao recarregar a página.
+// ===================================================================================
+let db = {
+    products: [
+        { id: 1, nome: "The Witcher 3: Wild Hunt", descricao: "RPG de mundo aberto aclamado pela crítica, com uma história rica e personagens inesquecíveis.", preco: 79.90, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/292030/header.jpg", category: "RPG" },
+        { id: 2, nome: "Red Dead Redemption 2", descricao: "Viva a vida de um fora da lei no final da era do Velho Oeste americano.", preco: 199.99, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg", category: "Ação" },
+        { id: 3, nome: "Portal 2", descricao: "Desafie as leis da física neste quebra-cabeças genial com uma narrativa hilária.", preco: 35.50, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/620/header.jpg?t=1690564613", category: "Puzzle" },
+        { id: 4, nome: "Cyberpunk 2077", descricao: "Explore a megalópole de Night City, onde a obsessão por poder e modificações corporais é lei.", preco: 129.90, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/1091500/header.jpg?t=1711643216", category: "RPG" },
+        { id: 5, nome: "Grand Theft Auto V", descricao: "Explore o vasto mundo de Los Santos e Blaine County na experiência definitiva de Grand Theft Auto V.", preco: 99.99, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/271590/header.jpg", category: "Ação" },
+        { id: 6, nome: "Minecraft", descricao: "Um jogo sobre quebrar e colocar blocos. Construa, explore e sobreviva em um mundo de infinitas possibilidades.", preco: 129.00, imagem_url: "https://image.api.playstation.com/vulcan/img/rnd/202209/2618/aD3d35iETPMAaC2i6T9yGt78.png", category: "Sandbox" },
+        { id: 7, nome: "The Legend of Zelda: Breath of the Wild", descricao: "Viaje por um mundo de descobertas, exploração e aventura. Uma jornada de mundo aberto.", preco: 299.00, imagem_url: "https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/ncom/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b72292305382300a205493b8c69145952344", category: "Aventura" },
+        { id: 8, nome: "Hades", descricao: "Desafie o deus dos mortos enquanto você batalha para fugir do Submundo neste 'roguelike' aclamado.", preco: 47.99, imagem_url: "https://cdn.akamai.steamstatic.com/steam/apps/1145360/header.jpg", category: "Roguelike" }
+    ],
+    users: [ 
+        { id: 1, username: 'admin', password: 'admin', isAdmin: true }, 
+        { id: 2, username: 'user', password: '123', isAdmin: false } 
+    ]
+};
+
+// ===================================================================================
+// API SIMULADA (USA A BASE DE DADOS EM MEMÓRIA)
+// ===================================================================================
+const api = {
+    getProducts: async () => Promise.resolve(db.products),
+    addProduct: async (newProduct) => {
+        const productToAdd = { ...newProduct, id: Date.now() };
+        db.products.push(productToAdd);
+        return Promise.resolve(productToAdd);
+    },
+    deleteProduct: async (id) => {
+        db.products = db.products.filter(p => p.id !== parseInt(id));
+        return Promise.resolve();
+    },
+    register: async (username, password) => {
+        if (db.users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+            throw new Error("Nome de utilizador já existe.");
+        }
+        const newUser = { id: Date.now(), username, password, isAdmin: false };
+        db.users.push(newUser);
+        return Promise.resolve(newUser);
+    },
+    login: async (username, password) => {
+        const user = db.users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+        if (!user) {
+            throw new Error("Credenciais inválidas.");
+        }
+        // sessionStorage continua a ser seguro e funciona no modo file:///
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        return Promise.resolve(user);
+    },
+    logout: () => sessionStorage.removeItem('currentUser'),
+    getCurrentUser: () => JSON.parse(sessionStorage.getItem('currentUser')),
+};
+
+// ===================================================================================
+// LÓGICA DA APLICAÇÃO (UI E CONTROLO)
+// ===================================================================================
+const App = {
+    allProducts: [],
+    productIdToDelete: null,
+
+    init() {
+        this.elements = {
+            navActions: document.getElementById('nav-actions'),
+            mobileMenu: document.getElementById('mobile-menu'),
+            modalContainer: document.getElementById('modal-container'),
+            modalContent: document.getElementById('modal-content'),
+            modalCloseBtn: document.getElementById('modal-close-btn'),
+            productList: document.getElementById('product-list'),
+            searchInput: document.getElementById('search-input'),
+            categoryFilters: document.getElementById('category-filters'),
+            openAddProductBtn: document.getElementById('open-add-product-modal-btn'),
+        };
+        this.bindEvents();
+        this.fullRender();
+    },
+
+    async fullRender() {
+        this.allProducts = await api.getProducts();
+        this.updateNav();
+        this.renderCategories();
+        this.filterAndSearch();
+    },
+    
+    updateNav() {
+        const currentUser = api.getCurrentUser();
+        const navContent = currentUser 
+            ? `<span class="text-gray-300">Olá, ${currentUser.username}${currentUser.isAdmin ? ' (Admin)' : ''}</span><button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Sair</button>`
+            : `<button id="login-btn" class="text-white">Login</button><button id="register-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">Registar</button>`;
+        this.elements.navActions.innerHTML = navContent;
+        this.elements.mobileMenu.innerHTML = navContent;
+    },
+
+    filterAndSearch() {
+        const searchTerm = this.elements.searchInput.value.toLowerCase();
+        const activeCategoryEl = this.elements.categoryFilters.querySelector('.active');
+        const activeCategory = activeCategoryEl ? activeCategoryEl.dataset.category : 'Todos';
+
+        let filteredProducts = this.allProducts;
+
+        if (activeCategory !== 'Todos') {
+            filteredProducts = filteredProducts.filter(p => p.category === activeCategory);
+        }
+        if (searchTerm) {
+            filteredProducts = filteredProducts.filter(p => p.nome.toLowerCase().includes(searchTerm));
+        }
+        
+        this.renderProducts(filteredProducts);
+    },
+
+    renderProducts(products) {
+        this.elements.productList.innerHTML = '';
+        if (products.length === 0) {
+             this.elements.productList.innerHTML = `<p class="text-gray-400 col-span-full text-center">Nenhum produto encontrado.</p>`;
+        } else {
+            products.forEach(product => this.elements.productList.appendChild(this.createProductCard(product)));
+        }
+    },
+    
+    renderCategories() {
+        const categories = ['Todos', ...new Set(this.allProducts.map(p => p.category))];
+        this.elements.categoryFilters.innerHTML = categories.map(cat => 
+            `<button class="category-btn px-4 py-2 bg-gray-700 hover:bg-cyan-700 rounded-lg transition-colors text-sm ${cat === 'Todos' ? 'active' : ''}" data-category="${cat}">${cat}</button>`
+        ).join('');
+    },
+
+    createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'product-card bg-gray-800 rounded-2xl shadow-lg overflow-hidden flex flex-col';
+        const user = api.getCurrentUser();
+        card.innerHTML = `
+            <div class="relative group">
+                <img src="${product.imagem_url}" alt="${product.nome}" class="w-full h-56 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/111827/FFF?text=Imagem+Indisponível';">
+                ${user && user.isAdmin ? `<button data-id="${product.id}" class="delete-btn absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white rounded-full p-2 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 18H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2m-6 5v6m4-6v6"/></svg></button>` : ''}
+            </div>
+            <div class="p-5 flex flex-col flex-grow">
+                <span class="text-xs font-semibold text-cyan-400 mb-1">${product.category.toUpperCase()}</span>
+                <h3 class="text-xl font-bold text-white truncate" title="${product.nome}">${product.nome}</h3>
+                <p class="text-gray-400 mt-2 text-sm flex-grow">${product.descricao}</p>
+                <div class="mt-4 flex justify-between items-center">
+                    <span class="text-2xl font-bold text-white">R$ ${Number(product.preco).toFixed(2)}</span>
+                </div>
+            </div>`;
+        return card;
+    },
+    
+    showModal(content) {
+        document.getElementById('modal-content').innerHTML = content;
+        document.getElementById('modal-container').classList.remove('hidden');
+    },
+    
+    hideModal() {
+        document.getElementById('modal-container').classList.add('hidden');
+        document.getElementById('modal-content').innerHTML = '';
+    },
+
+    showToast(message, isError = false) {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = message;
+        toast.className = `fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-xl transition-all duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.classList.remove('opacity-0', 'translate-y-10');
+        setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10'), 3000);
+    },
+
+    bindEvents() {
+        document.body.addEventListener('click', e => {
+            if (e.target.id === 'login-btn') this.showLoginModal();
+            if (e.target.id === 'register-btn') this.showRegisterModal();
+            if (e.target.id === 'logout-btn') { api.logout(); this.fullRender(); }
+            if (e.target.matches('.category-btn')) {
+                this.elements.categoryFilters.querySelector('.active')?.classList.remove('active');
+                e.target.classList.add('active');
+                this.filterAndSearch();
+            }
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                this.productIdToDelete = deleteBtn.dataset.id;
+                this.showDeleteConfirmation();
+            }
+        });
+        document.getElementById('modal-close-btn').addEventListener('click', () => this.hideModal());
+        this.elements.openAddProductBtn.addEventListener('click', () => {
+             const user = api.getCurrentUser();
+             if (user && user.isAdmin) this.showAddProductModal();
+             else this.showAdminLoginModal();
+        });
+        this.elements.searchInput.addEventListener('input', () => this.filterAndSearch());
+    },
+    
+    showLoginModal() {
+        this.showModal(`
+            <h3 class="text-2xl font-bold mb-6 text-center text-white">Login</h3>
+            <form id="login-form" class="space-y-4">
+                <input type="text" name="username" placeholder="Nome de Utilizador" required class="form-input w-full rounded-lg p-3">
+                <input type="password" name="password" placeholder="Palavra-passe" required class="form-input w-full rounded-lg p-3">
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition-colors">Entrar</button>
+                <p class="form-error-msg text-red-400 text-sm text-center h-4"></p>
+            </form>
+        `);
+        document.getElementById('login-form').addEventListener('submit', this.handleLogin.bind(this));
+    },
+
+    showRegisterModal() {
+        this.showModal(`
+            <h3 class="text-2xl font-bold mb-6 text-center text-white">Criar Conta</h3>
+            <form id="register-form" class="space-y-4">
+                <input type="text" name="username" placeholder="Nome de Utilizador" required class="form-input w-full rounded-lg p-3">
+                <input type="password" name="password" placeholder="Palavra-passe" required class="form-input w-full rounded-lg p-3">
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors">Registar</button>
+                <p class="form-error-msg text-red-400 text-sm text-center h-4"></p>
+            </form>
+        `);
+        document.getElementById('register-form').addEventListener('submit', this.handleRegister.bind(this));
+    },
+
+    showAdminLoginModal() {
+        this.showModal(`
+            <h3 class="text-2xl font-bold mb-6 text-center text-white">Acesso de Administrador</h3>
+            <p class="text-center text-gray-400 mb-4">É necessária a palavra-passe de admin.<br>(Dica: a senha é 'admin')</p>
+            <form id="admin-login-form" class="space-y-4">
+                <input type="password" name="password" placeholder="Palavra-passe de Admin" required class="form-input w-full rounded-lg p-3">
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors">Autenticar</button>
+                <p class="form-error-msg text-red-400 text-sm text-center h-4"></p>
+            </form>
+        `);
+        document.getElementById('admin-login-form').addEventListener('submit', this.handleAdminLogin.bind(this));
+    },
+    
+    showAddProductModal() {
+        this.showModal(`
+            <h2 class="text-2xl font-semibold mb-4 text-center text-white">Cadastrar Novo Produto</h2>
+            <form id="add-product-form" class="space-y-4">
+                <input type="text" name="nome" placeholder="Nome do Jogo/Produto" required class="form-input w-full rounded-lg p-3">
+                <input type="text" name="category" placeholder="Categoria (Ex: RPG, Ação)" required class="form-input w-full rounded-lg p-3">
+                <textarea name="descricao" placeholder="Descrição" required class="form-input w-full rounded-lg p-3 h-24"></textarea>
+                <div class="flex gap-4">
+                    <input type="number" name="preco" placeholder="Preço" step="0.01" required class="form-input w-full rounded-lg p-3">
+                    <input type="text" name="imagem_url" placeholder="URL da Imagem da Capa" required class="form-input w-full rounded-lg p-3">
+                </div>
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition-colors">Adicionar Produto</button>
+            </form>
+        `);
+        document.getElementById('add-product-form').addEventListener('submit', this.handleAddProduct.bind(this));
+    },
+
+    showDeleteConfirmation() {
+        this.showModal(`
+            <h3 class="text-xl font-bold mb-4 text-white">Confirmar Exclusão</h3>
+            <p class="text-gray-300 mb-6">Tem a certeza que deseja excluir este produto?</p>
+            <div class="flex justify-end gap-4">
+                <button id="cancel-delete-btn" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors">Cancelar</button>
+                <button id="confirm-delete-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-colors">Excluir</button>
+            </div>
+        `);
+        document.getElementById('confirm-delete-btn').addEventListener('click', this.handleDeleteProduct.bind(this));
+        document.getElementById('cancel-delete-btn').addEventListener('click', () => this.hideModal());
+    },
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const form = e.target;
+        const errorMsg = form.querySelector('.form-error-msg');
+        try {
+            await api.login(form.username.value, form.password.value);
+            this.hideModal();
+            this.fullRender();
+        } catch (error) {
+            errorMsg.textContent = error.message;
+        }
+    },
+    async handleRegister(e) {
+        e.preventDefault();
+        const form = e.target;
+        const errorMsg = form.querySelector('.form-error-msg');
+        try {
+            await api.register(form.username.value, form.password.value);
+            this.showToast('Conta criada com sucesso! Faça login.');
+            this.showLoginModal();
+        } catch (error) {
+            errorMsg.textContent = error.message;
+        }
+    },
+    async handleAdminLogin(e) {
+        e.preventDefault();
+        const form = e.target;
+        const errorMsg = form.querySelector('.form-error-msg');
+        if (form.password.value === 'admin') {
+            try {
+                await api.login('admin', 'admin');
+                this.showAddProductModal();
+                this.updateNav();
+            } catch (error) { /* O login pode falhar se o admin não existir, mas não importa */
+                this.showAddProductModal();
+            }
+        } else {
+            errorMsg.textContent = "Palavra-passe de admin inválida.";
+        }
+    },
+    async handleAddProduct(e) {
+        e.preventDefault();
+        const form = e.target;
+        const newProduct = {
+            nome: form.nome.value,
+            descricao: form.descricao.value,
+            preco: parseFloat(form.preco.value),
+            imagem_url: form.imagem_url.value,
+            category: form.category.value,
+        };
+        await api.addProduct(newProduct);
+        this.hideModal();
+        this.showToast('Produto adicionado com sucesso!');
+        this.fullRender();
+    },
+    async handleDeleteProduct() {
+        if (!this.productIdToDelete) return;
+        await api.deleteProduct(this.productIdToDelete);
+        this.hideModal();
+        this.showToast('Produto excluído com sucesso!');
+        this.fullRender();
+        this.productIdToDelete = null;
+    },
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>
